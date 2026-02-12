@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RenderJobStatus {
+  pending
+  processing
+  complete
+  failed
+}
+
+model User {
+  id         String      @id @default(cuid())
+  email      String      @unique
+  name       String?
+  createdAt  DateTime    @default(now())
+  renderJobs RenderJob[]
+}
+
+model StylePreset {
+  id                  String      @id @default(cuid())
+  name                String      @unique
+  promptBlock         String
+  negativePromptBlock String
+  strength            Float
+  createdAt           DateTime    @default(now())
+  renderJobs          RenderJob[]
+}
+
+model RenderJob {
+  id                 String          @id @default(cuid())
+  userId             String
+  stylePresetId      String
+  clayImageUrl       String
+  lineworkImageUrl   String?
+  materialIdImageUrl String?
+  viewportImageUrl   String?
+  status             RenderJobStatus @default(pending)
+  outputImages       String[]
+  createdAt          DateTime        @default(now())
+
+  user        User        @relation(fields: [userId], references: [id])
+  stylePreset StylePreset @relation(fields: [stylePresetId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([status])
+}
